@@ -76,6 +76,7 @@ public class So25102101Application {
         return tcpSendingMessageHandler;
     }
 
+    @Bean
     public ApplicationListener<TcpConnectionOpenEvent> listener() {
         return new ApplicationListener<TcpConnectionOpenEvent>() {
             public void onApplicationEvent(TcpConnectionOpenEvent event) {
