@@ -1,10 +1,60 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans"
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+       xmlns:int="http://www.springframework.org/schema/integration"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:int-ip="http://www.springframework.org/schema/integration/ip"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/integration http://www.springframework.org/schema/integration/spring-integration.xsd http://www.springframework.org/schema/integration/ip http://www.springframework.org/schema/integration/ip/spring-integration-ip.xsd http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd">
 
-    <bean id="helloBean" class="com.dpriest.shadowsocks.core.HelloWorld">
-        <property name="name" value="Mkyong" />
-    </bean>
+    <context:property-placeholder />
+
+    <int:gateway id="gw"
+                 service-interface="com.dpriest.shadowsocks.core.SimpleGateway"
+                 default-request-channel="input"/>
+
+    <int-ip:tcp-connection-factory id="client"
+                                   type="client"
+                                   host="localhost"
+                                   port="${availableServerSocket}"
+                                   single-use="true"
+                                   so-timeout="10000"/>
+
+    <int:channel id="input" />
+
+    <int-ip:tcp-outbound-gateway id="outGateway"
+                                 request-channel="input"
+                                 reply-channel="clientBytes2StringChannel"
+                                 connection-factory="client"
+                                 request-timeout="10000"
+                                 reply-timeout="10000"/>
+
+    <int:object-to-string-transformer id="clientBytes2String"
+                                      input-channel="clientBytes2StringChannel" />
+
+    <int-ip:tcp-connection-factory id="crLfServer"
+                                   type="server"
+                                   port="${availableServerSocket}"/>
+
+    <int-ip:tcp-inbound-gateway id="gatewayCrLf"
+                                connection-factory="crLfServer"
+                                request-channel="serverBytes2StringChannel"
+                                error-channel="errorChannel"/>
+
+    <int:channel id="toSA" />
+
+    <int:service-activator input-channel="toSA"
+                           ref="echoService"
+                           method="test"/>
+
+    <bean id="echoService"
+          class="com.dpriest.shadowsocks.core.EchoService" />
+
+    <int:object-to-string-transformer id="serverBytes2String"
+                                      input-channel="serverBytes2StringChannel"
+                                      output-channel="toSA"/>
+
+    <int:transformer id="errorHandler"
+                     input-channel="errorChannel"
+                     expression="payload.failedMessage.payload + ':' + payload.cause.message"/>
 
 </beans>
