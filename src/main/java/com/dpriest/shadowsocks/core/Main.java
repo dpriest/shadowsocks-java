@@ -1,71 +1,44 @@
 package com.dpriest.shadowsocks.core;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.support.ClassPathXmlApplicationContext;
-import org.springframework.context.support.GenericXmlApplicationContext;
-import org.springframework.core.env.MapPropertySource;
-import org.springframework.integration.ip.tcp.connection.AbstractServerConnectionFactory;
-import org.springframework.integration.ip.util.TestingUtilities;
-import org.springframework.integration.test.util.SocketUtils;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Scanner;
+import gnu.getopt.Getopt;
+import gnu.getopt.LongOpt;
 
 public class Main {
-    private static final Logger logger = LoggerFactory.getLogger(Main.class);
+
+    private static String serverHost = "127.0.0.1";
+    private static int port = 8000;
+    private static String password = "123456";
 
     public static void main(String[] args) {
-        logger.debug("main() is executed, value {}", "heeloBean");
-        logger.error("this is Error message", new Exception("Testing"));
+        setOps(args);
+        new ShadowSocksServer().start(serverHost, port, "aes-256-cfb", password);
+    }
 
-        final Scanner scanner = new Scanner(System.in);
+    private static void setOps(String[] argv) {
+        LongOpt[] longOpts = new LongOpt[3];
+        longOpts[0] = new LongOpt("serverHost", LongOpt.NO_ARGUMENT, null, 'h');
+        longOpts[1] = new LongOpt("port", LongOpt.REQUIRED_ARGUMENT, null, 'p');
+        longOpts[2] = new LongOpt("password", LongOpt.REQUIRED_ARGUMENT, null, 'k');
 
-        System.out.println("TCP-Client-Server Sample!");
+        Getopt g = new Getopt("shadowsocks", argv, "h:p:k", longOpts);
 
-        final GenericXmlApplicationContext context = Main.setupContext();
-        final SimpleGateway gateway = context.getBean(SimpleGateway.class);
-        final AbstractServerConnectionFactory crLfServer = context.getBean(AbstractServerConnectionFactory.class);
-
-        System.out.println("Waiting for server to accept connections...");
-        TestingUtilities.waitListening(crLfServer, 10000L);
-
-        while (true) {
-            final String input = scanner.nextLine();
-
-            if ("q".equals(input.trim())) {
-                break;
-            } else {
-                final String result = gateway.send(input);
-                System.out.println(result);
+        int c;
+        while ((c = g.getopt()) != -1) {
+            switch (c) {
+                case 'h':
+                    serverHost = g.getOptarg();
+                    break;
+                case 'p':
+                    port = Integer.parseInt(g.getOptarg());
+                    break;
+                case 'k':
+                    password = g.getOptarg();
+                    break;
+                default:
+                    throw new IllegalArgumentException("unknown option: " + c);
             }
         }
-
-        System.out.println("Exiting...");
-        System.exit(0);
     }
 
-    private static GenericXmlApplicationContext setupContext() {
-        final GenericXmlApplicationContext context = new GenericXmlApplicationContext();
-
-        System.out.print("Detect open server socket...");
-        int availableServerSocket = SocketUtils.findAvailableServerSocket(5678);
-
-        final Map<String, Object> sockets = new HashMap<String, Object>();
-        sockets.put("availableServerSocket", availableServerSocket);
-
-        final MapPropertySource propertySource = new MapPropertySource("sockets", sockets);
-
-        context.getEnvironment().getPropertySources().addLast(propertySource);;
-
-        System.out.println("using port" + context.getEnvironment().getProperty("availableServerSocket"));
-
-        context.load("classpath:SpringBeans.xml");
-        context.registerShutdownHook();
-        context.refresh();
-
-        return context;
-    }
 }
