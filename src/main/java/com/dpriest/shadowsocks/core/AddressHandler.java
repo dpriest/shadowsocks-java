@@ -30,6 +30,16 @@ class AddressHandler extends ChannelInboundHandlerAdapter {
     }
 
     @Override
+    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+        ctx.close();
+    }
+
+    @Override
+    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+        logger.info("disconnected with {}", ctx.channel());
+    }
+
+    @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         ByteBuf buf = (ByteBuf) msg;
 
@@ -41,7 +51,8 @@ class AddressHandler extends ChannelInboundHandlerAdapter {
         dataQueue.writeBytes(decrypted);
         if (dataQueue.readableBytes() < 2) {
             return;
-        } String host;
+        }
+        String host;
         int port;
         int addressType = dataQueue.getUnsignedByte(0);
         if (addressType == ADDR_TYPE_IPV4) {
@@ -68,7 +79,7 @@ class AddressHandler extends ChannelInboundHandlerAdapter {
         } else {
             throw new IllegalStateException("unknown address type" + addressType);
         }
-        ctx.channel().pipeline().addLast(new ClientDataHandler(host, port, ctx, buf, ssCrypto));
+        ctx.channel().pipeline().addLast(new ClientDataHandler(host, port, ctx, dataQueue, ssCrypto));
         ctx.channel().pipeline().remove(this);
     }
 }

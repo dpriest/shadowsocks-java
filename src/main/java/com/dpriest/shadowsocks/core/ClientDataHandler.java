@@ -45,6 +45,7 @@ public class ClientDataHandler extends ChannelInboundHandlerAdapter {
                 public void operationComplete(ChannelFuture future) throws Exception {
                     if (future.isSuccess()) {
                         logger.info("success to connect to {}:{}", host, port);
+                        remoteChannel.set(future.channel());
                     } else {
                         logger.info("error to connect to {}:{}", host, port);
                         clientCtx.close();
@@ -69,6 +70,14 @@ public class ClientDataHandler extends ChannelInboundHandlerAdapter {
             clientCache.writeBytes(decrypt);
         } else {
             remoteChannel.get().writeAndFlush(Unpooled.copiedBuffer(decrypt));
+        }
+    }
+
+    @Override
+    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+        ctx.close();
+        if (remoteChannel.get() != null) {
+            remoteChannel.get().close();
         }
     }
 
@@ -98,6 +107,19 @@ public class ClientDataHandler extends ChannelInboundHandlerAdapter {
                 ctx.close();
                 clientCtx.close();
             }
+        }
+
+        @Override
+        public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+            ctx.close();
+            clientCtx.close();
+        }
+
+        @Override
+        public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+            logger.info("remote data handler caught exception:", cause);
+            ctx.close();
+            clientCtx.close();
         }
     }
 }
