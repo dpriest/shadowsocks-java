@@ -10,7 +10,7 @@ PIDFILE="$TMP_HOME/service.pid"
 STDOUT_LOG="$LOG_HOME/service.log"
 
 export JAVA_HOME="/opt/java"
-export LD_LIBRARY_PATH=$PROJECT_HOME/lib:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=$PROJECT_HOME/target:$LD_LIBRARY_PATH
 export PATH=${JAVA_HOME}/bin:$PATH
 
 if [ -z "$JAVA" ] ; then
@@ -38,7 +38,7 @@ if ! netstat -tln 2>&1 | grep ':7777' >/dev/null 2>&1; then
 else
     JMX_PORT=$((RANDOM%10+7780))
 fi
-JAVA_OPTS="-server -Xms${JVM_HEAP}m -Xmx${JVM_HEAP}m -Xmn${JVM_EDEN}m -XX:SurvivorRatio=8 -XX:PermSize=256m -XX:MaxPermSize=256m -Xss256k -XX:-UseAdaptiveSizePolicy -XX:MaxTenuringThreshold=15 -XX:+DisableExplicitGC -XX:+UseConcMarkSweepGC -XX:+UseCMSCompactAtFullCollection -XX:+CMSParallelRemarkEnabled -XX:+CMSPermGenSweepingEnabled -XX:+UseFastAccessorMethods -XX:+CMSClassUnloadingEnabled -XX:+UseCMSInitiatingOccupancyOnly -XX:CMSInitiatingOccupancyFraction=70"
+JAVA_OPTS="-server -Xms${JVM_HEAP}m -Xmx${JVM_HEAP}m -Xss256k -XX:+UseG1GC -XX:MaxGCPauseMillis=200"
 JAVA_OPTS="${JAVA_OPTS} -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=$LOG_HOME/java.hprof -XX:ErrorFile=$LOG_HOME/hs_err_pid_%p.log"
 JAVA_OPTS="${JAVA_OPTS} -verbose:gc -Xloggc:$LOG_HOME/gc.log -XX:+PrintHeapAtGC -XX:+PrintGCDetails -XX:+PrintGCDateStamps -XX:+PrintTenuringDistribution -XX:+PrintGCApplicationStoppedTime"
 JAVA_OPTS="${JAVA_OPTS} -XX:-UseCompressedOops"
@@ -66,7 +66,7 @@ if [ -f "$STDOUT_LOG" ]; then
 fi
 
 
-MAIN_CLASS="com.dpriest.shadowsocks.core"
+MAIN_CLASS="com.dpriest.shadowsocks.core.Main"
 
 for i in ${PROJECT_HOME}/lib/*;
     do CLASSPATH=$i:"$CLASSPATH";
