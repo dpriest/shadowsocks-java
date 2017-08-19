@@ -1,4 +1,5 @@
 #!/bin/bash
+HOST="0.0.0.0"
 cd `dirname $0`/..
 BASE_HOME="`pwd`"
 PROJECT_NAME=`basename $BASE_HOME`
@@ -66,15 +67,12 @@ if [ -f "$STDOUT_LOG" ]; then
 fi
 
 
-MAIN_CLASS="com.dpriest.shadowsocks.core.Main"
+MAIN_JAR="${PROJECT_HOME}/target/shadowsocks-1.0-SNAPSHOT.jar"
+SS_OPT="-h${HOST}"
 
-for i in ${PROJECT_HOME}/lib/*;
-    do CLASSPATH=$i:"$CLASSPATH";
-done
 echo "cd to ${PROJECT_HOME}/bin for workaround relative path"
 cd ${PROJECT_HOME}/bin
-echo CLASSPATH:$CLASSPATH
-nohup $JAVA $JAVA_OPTS $JAVA_DEBUG_OPT $SERVICE_OPTS -classpath $CLASSPATH $MAIN_CLASS >$STDOUT_LOG 2>&1 &
+nohup $JAVA $JAVA_OPTS -jar $MAIN_JAR $SS_OPT >$STDOUT_LOG 2>&1 &
 echo $! > ${PIDFILE}
 echo "cd to ${PROJECT_HOME}/bin for continue"
 cd ${PROJECT_HOME}/bin
