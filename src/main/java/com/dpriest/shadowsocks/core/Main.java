@@ -19,9 +19,9 @@ public class Main {
         LongOpt[] longOpts = new LongOpt[3];
         longOpts[0] = new LongOpt("serverHost", LongOpt.NO_ARGUMENT, null, 'h');
         longOpts[1] = new LongOpt("port", LongOpt.REQUIRED_ARGUMENT, null, 'p');
-        longOpts[2] = new LongOpt("password", LongOpt.REQUIRED_ARGUMENT, null, 'k');
+        longOpts[2] = new LongOpt("password", LongOpt.REQUIRED_ARGUMENT, null, 'P');
 
-        Getopt g = new Getopt("shadowsocks", argv, "h:p:k", longOpts);
+        Getopt g = new Getopt("shadowsocks", argv, "h:p:P", longOpts);
 
         int c;
         while ((c = g.getopt()) != -1) {
@@ -32,7 +32,7 @@ public class Main {
                 case 'p':
                     port = Integer.parseInt(g.getOptarg());
                     break;
-                case 'k':
+                case 'P':
                     password = g.getOptarg();
                     break;
                 default:
